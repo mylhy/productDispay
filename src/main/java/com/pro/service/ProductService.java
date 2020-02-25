@@ -71,6 +71,12 @@ public class ProductService {
 	    
 		Page<Product> pageInfoList = productDao.findAll(specification, pageable);
 		
+		for (Product product : pageInfoList) {
+			product.setProductFiles(productFileDao.findByProductId(product.getId()));
+			product.setSpecLists(productSpecDao.findByProductId(product.getId()));
+			
+		}
+		
 		return pageInfoList.getContent();
 	
 	}
@@ -85,8 +91,20 @@ public class ProductService {
 		if(productFiles != null && productFiles.length>0) {
 			addProductFile(product, productFiles);
 		}
-		addProductSpec(product, specs);
+		if(specs != null && specs.length>0) {
+			addProductSpec(product, specs);
+		}
 		return product;
+	}
+	
+
+	public Product delete(Integer id, User u) {
+		Product product=productDao.getOne(id);
+		product.setIsDelete(-1);
+		product.setUpdateUser(u.getId());
+		product.setUpdateDate(new Timestamp(System.currentTimeMillis()));
+		
+		return productDao.save(product);
 	}
 	
 	/**
@@ -122,5 +140,6 @@ public class ProductService {
 			productFileDao.save(pf);
 		}
 	}
+
 
 }

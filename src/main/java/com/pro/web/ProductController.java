@@ -81,7 +81,7 @@ public class ProductController {
 
 		User u=(User) request.getSession().getAttribute("user");
 		if(product.getId()!=null) {
-//			product=productService.add(product,productFiles,u);
+			product=productService.add(product,productFiles,specs,u);
 			attr.addFlashAttribute("msg", product==null?"修改成功":"修改失败");
 		}else {
 			product=productService.add(product,productFiles,specs,u);
@@ -90,4 +90,15 @@ public class ProductController {
 		
 		return "redirect:/product/index";
 	}
+	 //删除
+    @RequestMapping("/delete")
+    public String delete(String id,RedirectAttributes attr) {
+    	User u = (User) request.getSession().getAttribute("user");
+    	if(BaseUtils.isInteger(id)) {
+    		Product product = productService.delete(Integer.valueOf(id),u);
+    		attr.addFlashAttribute("msg", product == null? "删除失败": "删除成功");
+    	}
+
+		return "redirect:/product/index";
+    }
 }
