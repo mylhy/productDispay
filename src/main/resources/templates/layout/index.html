@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html th:fragment="layout (title,content,script)" xmlns:th="http://www.thymeleaf.org">
+	<head>
+		<meta charset="utf-8"/>
+  		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+		<title th:replace="${title}">index</title>
+		
+		<link rel="stylesheet" th:href="@{/layui/css/layui.css}"/>
+	</head>
+
+<body class="layui-layout-body">
+
+<div class="layui-layout layui-layout-admin">
+<!-- top -->
+<nav th:replace="layout/header :: header"></nav>
+<!-- 侧边导航栏 -->
+<nav th:replace="layout/left_sidebar :: sidebar"></nav>
+
+<div class="layui-body">
+    <!-- 内容主体区域 --> 
+    <div th:replace="${content}">内容主体区域</div>
+  </div>
+<!-- 内容区域 end -->
+  <div class="layui-footer">
+    <!-- 底部固定区域 -->
+    © layui.com - 底部固定区域
+  </div>
+</div>
+<script th:src="@{/layui/layui.js}"></script>
+<script>
+//JavaScript代码区域
+layui.use('element', function(){
+  var element = layui.element;
+  
+});
+</script>
+<th:block th:replace="${script}" />
+
+
+</body>
+</html>

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/index :: layout(~{::title},~{::#content},~{::script})}">
+
+<title>index</title>
+
+<!-- 内容区域 start -->
+<div id="content" style="padding: 15px;">
+	test
+	
+	
+</div>
+<!-- 内容区域 end -->
+<script>
+layui.use(['layer',"jquery"], function(){
+	  var layer = layui.layer;
+	  var $ = layui.jquery;
+
+	  //样式选择
+	  $("#sidebar #index").addClass("layui-this");
+});
+</script>

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>login</title>
+  <link rel="stylesheet" th:href="@{/layui/css/layui.css}">
+  <style type="text/css">
+  	.login-body:before {
+		position: fixed; 
+		top: 0; 
+		left: 0; 
+		z-index: -1; 
+		width: 100%; 
+		height: 100%; 
+		content: ''; 
+		background: #62a8ea; 
+		background: url(/layui/images/login_bg.jpg) center center/cover no-repeat !important; }
+  	}
+  </style>
+</head>
+<body class="layui-layout-body login-body">
+
+<div class="layui-main layui-layout-right" style="margin-top:15%;width: 30%;min-width: 500px;">
+
+<form class="layui-form" action="/">
+  <div class="layui-form-item">
+  
+    <label class="layui-form-label">输入框</label>
+    <div class="layui-input-inline">
+      <input type="text" name="login_name" readonly required value="admins"  lay-verify="required" placeholder="请输入标题" autocomplete="off" class="layui-input">
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label">密码框</label>
+    <div class="layui-input-inline">
+      <input type="password" name="login_password" required value="admins" lay-verify="required" placeholder="请输入密码" autocomplete="off" class="layui-input">
+    </div>
+<!--     <div class="layui-form-mid layui-word-aux">辅助文字</div> -->
+  </div>
+  <div class="layui-form-item">
+    <div class="layui-input-block">
+      <button class="layui-btn" lay-submit lay-filter="formDemo">立即提交</button>
+      <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+    </div>
+  </div>
+</form>
+	</div>
+
+<script th:src="@{/layui/layui.js}"></script>
+<script>
+//JavaScript代码区域
+layui.use(['form','jquery'], function(){
+	  var form = layui.form;
+	  //监听提交
+	  form.on('submit(formDemo)', function(data){
+		//提交到后台 
+		console.log(data.field);
+// 	    layer.msg(data);
+		//请求登入接口
+	    layui.jquery.post("/login",data.field,function(result){
+	    	layer.msg(result.msg);
+			if(result.code==1){
+                window.location = result.url;
+			}
+	      });
+	    return false;
+	  });
+});
+</script>
+</body>
+</html>

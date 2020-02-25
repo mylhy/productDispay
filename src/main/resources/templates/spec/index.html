@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/index :: layout(~{::title},~{::#content},~{::script})}">
+
+<title>规格管理</title>
+
+<div class=" layadmin-header" id="content" style="padding: 15px;">
+<style>
+img {
+    max-width: 80%;
+    border-radius: 50%;
+    margin-top: 5px;
+}
+.interval-5{
+	margin:5px 0;
+}
+</style>
+  <div class="layui-breadcrumb" lay-filter="breadcrumb" style="visibility: visible;">
+	<input type="hidden" id="msg" th:value="${msg}">
+	<input type="hidden" id="pageInfo" th:value="${pageInfo}">
+    <a href="/index">主页</a><span lay-separator="">/</span>
+    <a><cite>规格</cite></a>
+  </div>
+  
+  <div style="margin-top: 15px;">
+	<a class="layui-btn layui-btn-sm layui-btn-normal" id="addBtn">
+		<i class="layui-icon layui-icon-add-1"></i> 添加
+	</a>
+   </div>
+      
+  <table class="layui-table">
+  <colgroup>
+    <col width="150">
+    <col width="200">
+    <col>
+  </colgroup>
+  <thead>
+    <tr>
+      <th>序号</th>
+      <th>name</th>
+      <th>value</th>
+      <th>添加时间</th>
+      <th>操作</th>
+    </tr> 
+  </thead>
+  <tbody>
+  	<tr th:if="${not #strings.isEmpty(specList)}"><td colspan="5" align="center">目前没有数据</td></tr>
+    <tr th:each="obj,memberStat:${specList}">
+      <td th:text="${memberStat.index + 1}"/>
+
+	  <td th:text="${obj.name}"></td>
+	  <td><ul><li th:each="obj2,memberStat:${obj.SpecValues}" th:text="${obj2.specValue}"></li></ul>
+<!-- 	  <span th:each="obj2,memberStat:${obj.SpecValues}" th:text="${obj2.specValue}"></span></td> -->
+      <td th:text="${#dates.format(obj.createDate,'yyyy-MM-dd HH:mm:ss')}"></td>
+      <td>
+      
+<!--       <button class="layui-btn layui-btn-sm layui-btn-normal"> -->
+<!--       <i class="layui-icon layui-icon-tips"></i> 详情</button> -->
+      
+      <button class="layui-btn layui-btn-sm layui-btn-normal spec-update" th:data-id="${obj.id}">
+      <i class="layui-icon layui-icon-edit"></i> 修改</button>
+      <button class="layui-btn layui-btn-sm layui-btn-danger" th:data-name="${obj.name}" th:data-id="${obj.id}">
+      <i class="layui-icon layui-icon-delete"></i> 删除</button>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<div id="page"></div>
+
+</div>
+
+<script>
+layui.use(['layer','form','jquery','laypage'], function(){
+	  var layer = layui.layer;
+	  var $ = layui.jquery,
+	  form = layui.form,
+	  laypage = layui.laypage;
+	  
+	  var msg=$("#msg").val();
+	  if(msg != ''){
+		  layer.msg(msg);
+	  }
+	  var pageInfo=eval('(' + $("#pageInfo").val() + ')');
+	  if(pageInfo != ''){
+		//执行一个laypage实例
+		  laypage.render({
+		    elem: 'page',
+		    count: pageInfo.totalResult,//数据总数，从服务端得到
+		    curr: pageInfo.pageNum, //获取起始页 
+		    jump: function(obj, first){
+		        //obj包含了当前分页的所有参数，比如：
+// 	 	        console.log(obj.curr); //得到当前页，以便向服务端请求对应页的数据。
+// 	 	        console.log(obj.limit); //得到每页显示的条数
+		    	//首次不执行
+		        if(!first){
+					window.location = "/spec/index?page="+obj.curr;
+		        }
+		    }
+		  });
+	  }
+	
+	  
+	//监听提交
+	  form.on('submit(formDemo)', function(data){
+	    layer.msg(JSON.stringify(data.field));
+	    return false;
+	  });
+	  
+	  //样式选择
+	  $("#sidebar li").removeClass("layui-this");
+	  $("#sidebar #classify").addClass("layui-this");
+	  
+	  var msg=$("#msg").val();
+	  if(msg != ''){
+		  layer.msg(msg);
+	  }
+	  
+	  //为按钮绑定事件
+	  $('.layui-btn-danger').on('click', function(){
+		  var id=$(this).attr("data-id");
+		  var name=$(this).attr("data-name");
+		  layer.confirm('是否删除'+name+'?', {title:'提示'}, function(index){
+			  layer.close(index);
+			  window.location = "/spec/delete?id="+id;
+			});
+	  });
+	  
+
+	  
+	  $('.spec-update').on('click', function(){
+		  var id=$(this).attr("data-id");
+		  $.post("/spec/get","id="+id,function(res){
+			  if(res=='null')
+				  leyer.msg("数据有误");
+			  
+			  var id = res.spec.id,
+			  name = res.spec.name,
+			  specValue = res.specValue,
+			  valueText = '';
+
+			  $(specValue).each(function(ind,obj){
+				  valueText+='<div class="layui-form-item">'+
+				'<label class="layui-form-label">规格值</label>'+
+				'<div class="layui-input-inline">'+
+				'<input type="text" name="value" value="'+obj.specValue+'" lay-verify="required" class="layui-input" placeholder="请输入规格值" >'+
+				'</div>';
+				
+				if(ind>0){
+					valueText+='<div class="layui-form-mid layui-word-aux sepc-value-del"><i class="layui-icon layui-icon-delete" style="color:red;" title="点击删除"></i></div>';
+				}
+				valueText+='</div>';
+			  });
+			  
+			  var text='<form class="layui-form" action="/spec/add" method="post" id="specForm" style="margin-top:10px;" > '+
+			  	'<input type="hidden" name="id" value="'+id+'">'+
+				'<div class="layui-form-item">'+
+				'<label class="layui-form-label">规格名</label>'+
+				'<div class="layui-input-inline">'+
+				'<input type="text" name="name" value="'+name+'" lay-verify="required" class="layui-input" placeholder="请输入规格名" >'+
+				'</div></div>'+
+				valueText+
+				'<div class="layui-form-item add-spec-value">'+
+				'<label class="layui-form-label"></label>'+
+				'<div class="layui-input-inline">'+
+				'<button type="button" class="layui-btn layui-btn-xs" id="addValue">追加规格值</button>'+
+				'</div></div>'+
+				'<div class="layui-form-item"><div class="layui-input-block">'+
+				'<button class="layui-btn layui-btn-sm" lay-submit >立即提交</button>'+
+				'<button type="reset" class="layui-btn layui-btn-primary layui-btn-sm">重置</button>'+
+				'</div></div>'+
+				'</form>';
+			  showDataModel(text);
+			  
+// 			  console.log(res);
+// 			  console.log(res.spec);
+// 			  console.log(res.spec.name);
+			  
+			  
+			  
+		  });
+		  
+// 		  window.location = "/edit/toEdit?id="+$(this).attr("data-id");
+// 		  console.log($(this).attr("data-id"));
+	  });
+
+	  $('#addBtn').on('click', function(){
+		  var text='<form class="layui-form" action="/spec/add" method="post" id="specForm" style="margin-top:10px;" > '+
+			'<div class="layui-form-item">'+
+			'<label class="layui-form-label">规格名</label>'+
+			'<div class="layui-input-inline">'+
+			'<input type="text" name="name" lay-verify="required" class="layui-input" placeholder="请输入规格名" >'+
+			'</div></div>'+
+			'<div class="layui-form-item">'+
+			'<label class="layui-form-label">规格值</label>'+
+			'<div class="layui-input-inline">'+
+			'<input type="text" name="value" lay-verify="required" class="layui-input" placeholder="请输入规格值" >'+
+			'</div></div>'+
+			'<div class="layui-form-item add-spec-value">'+
+			'<label class="layui-form-label"></label>'+
+			'<div class="layui-input-inline">'+
+			'<button type="button" class="layui-btn layui-btn-xs" id="addValue">追加规格值</button>'+
+			'</div></div>'+
+			'<div class="layui-form-item"><div class="layui-input-block">'+
+			'<button class="layui-btn layui-btn-sm" lay-submit >立即提交</button>'+
+			'<button type="reset" class="layui-btn layui-btn-primary layui-btn-sm">重置</button>'+
+			'</div></div>'+
+			'</form>';
+		  showDataModel(text);
+	  });
+	  
+	  
+	  
+	  function showDataModel(text){
+			layer.open({
+				  title: '添加规格',
+				  offset: '100px',
+				  area: '380px',
+				  content: text,
+				  type: 1, 
+				  success: function(layero, index){
+					  $('#addValue').on('click', function(){
+						  //var value=$("#specForm input[name='value']:last");
+						  var vinput=$("#specForm .add-spec-value")
+						  vinput.before('<div class="layui-form-item">'+
+							'<label class="layui-form-label">规格值</label>'+
+							'<div class="layui-input-inline">'+
+							'<input type="text" name="value" lay-verify="required" class="layui-input" placeholder="请输入规格值" >'+
+							'</div><div class="layui-form-mid layui-word-aux sepc-value-del">'+
+							'<i class="layui-icon layui-icon-delete" style="color:red;" title="点击删除"></i>'+
+							'</div></div>');
+
+						  $('.sepc-value-del').on('click', function(){
+							  $(this).parent().remove();
+							});
+						  	
+						  form.render();
+					  });
+				  }
+				}); 
+	  	}
+	  
+	});  
+
+
+</script>

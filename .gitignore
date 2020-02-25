@@ -1,0 +1,4 @@
+/target/
+HELP.md
+mvnw*
+/src/main/resources/static

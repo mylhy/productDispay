@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/index :: layout(~{::title},~{::#content},~{::script})}">
+
+<title th:text="${editType}"></title>
+
+<div id="content">
+	
+	<style>
+	.file-item {
+	    float: left;
+	    position: relative;
+	    padding: 4px;
+	}
+	.file-item-delete{
+	position: absolute;
+	    top: -10px;
+	    right: -10px;
+	    cursor: pointer;
+	    height: 22px;
+	    width: 22px;
+	    line-height: 22px;}
+	</style>
+
+<div class="layui-card layadmin-header" style="padding: 15px;">
+  <div class="layui-breadcrumb" lay-filter="breadcrumb" style="visibility: visible;">
+    <a href="/index">主页</a><span lay-separator="">/</span>
+    <a><cite>分类</cite></a><span lay-separator="">/</span>
+    <a><cite  th:text="${editType}"></cite></a>
+  </div>
+</div>
+	<div class="layui-fluid">
+	<blockquote class="layui-elem-quote" th:text="${editType}"></blockquote>
+	<form class="layui-form" th:action="@{/classify/edit}" method="post" >
+		<input type="hidden" id="id" name="id" th:value="${id}" >
+	  <div class="layui-form-item">
+	    <label class="layui-form-label">分类名称</label>
+	    <div class="layui-input-block">
+	      <input type="text" name="name" required lay-verify="required" 
+	      placeholder="请输入分类名称" autocomplete="off" class="layui-input">
+	    </div>
+	  </div>
+	
+	  <div class="layui-form-item">
+	    <label class="layui-form-label">上级分类</label>
+	    <div class="layui-input-inline">
+	   	<select name="parentId.id">
+	        <option value="">无</option>
+	        <option th:each="obj,memberStat:${classifyList}" 
+			th:value="${obj.id}" th:text="${obj.name}"></option>
+	      </select>
+	    </div>
+	  </div>
+	  
+	   <div class="layui-form-item">
+	    <label class="layui-form-label">分类图片</label>
+	    <div class="layui-input-block">
+	      <button type="button" class="layui-btn layui-btn-sm" id="uploadImg">
+			  <i class="layui-icon layui-icon-upload-drag"></i>上传图片
+			</button>
+			
+			
+		<div class="file-item layui-hide">
+			<a href="" title="点击查看大图" target="_blank">
+		    	<img class="layadmin-homepage-pad-img" width="96" height="96">
+	        </a>
+			<input type="hidden" id="uploadFileId" name="uploadFile.id">
+			<i class="layui-icon layui-icon-close-fill file-item-delete layui-hide"></i> 
+	         </div>
+		</div>
+	  </div>
+
+	  
+	  <div class="layui-form-item">
+	    <label class="layui-form-label">分类排序</label>
+	    <div class="layui-input-block">
+	      <input type="text" name="sort" required 
+	       lay-verify="required" placeholder="请输入排序" value="100" class="layui-input">
+	    </div>
+	  </div>
+	  
+	  <div class="layui-form-item">
+	    <div class="layui-input-block">
+	      <button class="layui-btn" lay-submit lay-filter="formDemo">立即提交</button>
+	      <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+	    </div>
+	  </div>
+	</form>
+
+</div>
+
+</div>
+<script>
+layui.use(['form','upload','jquery'], function(){
+	  var form = layui.form;
+	  var upload = layui.upload;
+	  var $ = layui.$;
+	  
+	  $("#sidebar #classify").addClass("layui-this");
+	//执行实例
+	  var uploadInst = upload.render({
+	    elem: '#uploadImg' //绑定元素
+	    ,url: '/upload' //上传接口
+	    ,done: function(res){
+	    	//图片上传成功, 隐藏添加按钮，显示图片
+	    	$("#uploadImg").addClass("layui-hide");
+	    	$(".file-item").removeClass("layui-hide");
+	    	
+	        $(".layadmin-homepage-pad-img").attr("src", "/image/" + res.imagePath);
+	        $(".layadmin-homepage-pad-img").parent().attr("href", "/image/" + res.imagePath);
+	        $("#uploadFileId").val(res.imgFileId);
+	    }
+	    ,error: function(){
+	      //请求异常回调
+	    }
+	  });
+	
+	
+	
+	//判断id是否存在，如果存在，就异步获取obj进行修改
+	var id=$("#id").val();
+	if(id != ''){
+		$.post("/classify/get","id="+id,function(result){
+			$("input[name='name']").val(result.name);
+			$("input[name='sort']").val(result.sort);
+			if(result.parentId != ''){
+				$("select[name='parentId.id'] option[value='"+result.parentId.id+"']").attr("selected", true);
+			}
+			if(result.uploadFile != ''){
+				var uploadFile=result.uploadFile;
+// 				$(".layadmin-homepage-pad-img").removeClass("layui-hide");
+// 		        $(".layadmin-homepage-pad-img").attr("scr", "/image/" + uploadFile.fileName);
+
+	    	$("#uploadImg").addClass("layui-hide");
+	    	$(".file-item").removeClass("layui-hide");
+		        $(".layadmin-homepage-pad-img").attr("src", "/image/" + uploadFile.fileName);
+		        $(".layadmin-homepage-pad-img").parent().attr("href", "/image/" + uploadFile.fileName);
+		        
+		        $("#uploadFileId").val(uploadFile.id);
+			}
+			console.log(result);
+			form.render();//重新渲染
+		});
+	}
+	//鼠标经过事件
+	$(".file-item").mouseover(function(){
+		$(".file-item-delete").removeClass("layui-hide");
+	});
+	
+	$(".file-item").mouseout(function(){
+		$(".file-item-delete").addClass("layui-hide");
+	});
+	//删除图片
+	$(".file-item-delete").on("click",function(){
+	 layer.confirm('是否删除图片?', {title:'提示'}, function(index){
+		  layer.close(index);
+			//删除隐藏域的值，并隐藏图片，显示添加按钮
+	    	$(".file-item").addClass("layui-hide");
+	    	$("#uploadImg").removeClass("layui-hide");
+	        $("#uploadFileId").val("");
+		});
+	});
+});
+</script>
