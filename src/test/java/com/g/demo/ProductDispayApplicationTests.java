@@ -8,6 +8,7 @@ class ProductDispayApplicationTests {
 
 	@Test
 	void contextLoads() {
+System.out.print("test");
 	}
 
 }
